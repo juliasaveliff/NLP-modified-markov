@@ -1,10 +1,15 @@
-def finish_sentence(sentence, n, corpus):
+def finish_sentence(sentence, n, corpus, max_length=15):
+	# sentence: String[]
+	# n: int 
+	# corpus: String[]
+
 	pattern = sentence[-(n-1):]
 	output = []
 	for item in pattern:
 		output.append(item)
 
-	while (len(output) + len (sentence[:-(n-1)]))<15:
+	# Stop when generated sentence has max length
+	while (len(output) + len (sentence[:-(n-1)])) < max_length:
 		frequency={}
 
 		for i in range(n,len(corpus)-1):
@@ -33,4 +38,4 @@ def finish_sentence(sentence, n, corpus):
 		if next in end:
 			return sentence[:-(n-1)]+ output
 
-	return sentence[:-(n-1)]+ output
+	return sentence[:-(n-1)] + output
