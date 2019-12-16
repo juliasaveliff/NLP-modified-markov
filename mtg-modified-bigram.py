@@ -1,18 +1,18 @@
 def beautify_text(word_list):
-	sentence = ''
+	text = ''
 	for (ix, word) in enumerate(word_list): 
 		if ix == 0: 
-			sentence += word.capitalize()
+			text += word.capitalize()
 		else: 
 			if word in ['.', '?', '!', ',', ';']:
-				sentence += word
+				text += word
 			else: 
-				sentence += ' '
+				text += ' '
 				if word_list[ix-1] in ['.', '?', '!']: 
-					sentence += word.capitalize()
+					text += word.capitalize()
 				else:
-					sentence += word
-	return sentence
+					text += word
+	return text
 
 def finish_sentence(sentence, max_distance, corpus_list, max_length=50):
 	# sentence: String[] of starter sentence to complete
