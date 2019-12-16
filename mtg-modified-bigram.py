@@ -1,9 +1,25 @@
-def finish_sentence(sentence, m, corpus_list, max_length=15):
+def beautify_text(word_list):
+	sentence = ''
+	for (ix, word) in enumerate(word_list): 
+		if ix == 0: 
+			sentence += word.capitalize()
+		else: 
+			if word in ['.', '?', '!', ',', ';']:
+				sentence += word
+			else: 
+				sentence += ' '
+				if word_list[ix-1] in ['.', '?', '!']: 
+					sentence += word.capitalize()
+				else:
+					sentence += word
+	return sentence
+
+def finish_sentence(sentence, max_distance, corpus_list, max_length=50):
 	# sentence: String[] of starter sentence to complete
     # m: maximum distance to compute modified bigram
     # corpus: String[] of training text
 
-    generated_sentence = sentence.copy()
+    generated_sentence = [word.lower() for word in sentence]
 
     # Preprocess corpus
     corpus = [word.lower() for word in corpus_list]
@@ -19,16 +35,24 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
     		print(word + ' not in vocabulary')
     		return generated_sentence
 
-    # Weight of word decreases by 1/2 with distance from next word to gerneate
-    pmf_weights_unnormalized = [2**i for i in range(m)]
-    pmf_weights = [float(i)/sum(pmf_weights_unnormalized) for i in pmf_weights_unnormalized]
-
     # Generate one word at a time, stopping if sentence has maximum total tokens
     while len(generated_sentence) < max_length: 
 
+    	# If sentence contains less than max_distance 
+        if len(generated_sentence) < max_distance: 
+        	m = len(generated_sentence)
+        else: 
+        	m = max_distance
+
+        # Weight of word decreases by 1/2 with distance from next word to gerneate
+        # pmf_weights_unnormalized = [2**i for i in range(m)]
+
+        # Weight words equally
+        pmf_weights_unnormalized = [1 for i in range(m)]
+        pmf_weights = [float(i)/sum(pmf_weights_unnormalized) for i in pmf_weights_unnormalized]
+
         # Get last m words of sentence
         pattern = generated_sentence[-m:]
-        # print("starter sentence:", pattern)
 
         # Stop when the first ., ?, or ! is found
         if pattern[-1] in ['.', '?', '!']:
@@ -36,8 +60,8 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
 
         # Initialize frequency of all words in vocabulary
         frequency = {}
-        for key in pattern:
-        	frequency[key] = {word:0 for word in vocabulary}
+        # for key in pattern:
+        	# frequency[key] = {word:0 for word in vocabulary}
 
         # Iterate over every word in corpus
         for i in range(len(corpus)-m): 
@@ -50,6 +74,8 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
         			frequency[key] = {}
         		if corpus[i] == key: 
         			next_word = corpus[i + d]
+        			if next_word not in frequency[key]:
+        				frequency[key][next_word] = 0
         			frequency[key][next_word] += 1
 
         # Combine probability mass functions for each key's categorical distribution
@@ -60,10 +86,13 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
         	for word in frequency[key]:
         		pmf[key][word] = float(frequency[key][word]) / total
 
-        combined_pmf = {word:0 for word in vocabulary}
+        # combined_pmf = {word:0 for word in vocabulary}
+        combined_pmf = {}
         for (ix, key) in enumerate(pattern):
         	weight = pmf_weights[ix]
         	for word in pmf[key]:
+        		if word not in combined_pmf:
+        			combined_pmf[word] = 0
         		combined_pmf[word] += pmf[key][word] * weight
 
         # Get best word option based on combined and weighted probabilities
@@ -77,24 +106,20 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
         		best_words.append(word)
         		max_probability = combined_pmf[word]
 
-        # print("best words:", best_words)
-
-        # Determine best word to add to sentence and continue building
         generated_sentence.append(best_words[0])
 
-    return generated_sentence
-
+    return beautify_text(generated_sentence)
+             
 
 import nltk
 # nltk.download("brown")
 from nltk.corpus import brown
-words = brown.words()[:1000]
-sentence = "the jury had".split()
-result = finish_sentence(sentence, 3, words)
-print(' '.join(sentence))
-print(' '.join(result))
+words = brown.words()[:5000]
 
-sentence2 = "this judge was the".split()
-result2 = finish_sentence(sentence2, 3, words)
-print(' '.join(sentence2))
-print(' '.join(result2))
+sentence = "The jury had"
+print(sentence)
+print(finish_sentence(sentence.split(), 5, words))
+
+sentence = "When"
+print(sentence)
+print(finish_sentence(sentence.split(), 5, words))
