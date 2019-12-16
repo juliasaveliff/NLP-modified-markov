@@ -2,6 +2,7 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
 	# sentence: String[] of starter sentence to complete
     # m: maximum distance to compute modified bigram
     # corpus: String[] of training text
+    sentence = [word.lower() for word in sentence]
 
     generated_sentence = sentence.copy()
 
@@ -15,12 +16,12 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
     	ix_to_word[ix] = word
 
     for word in generated_sentence: 
-    	if word.lower() not in vocabulary: 
+    	if word not in vocabulary: 
     		print(word + ' not in vocabulary')
     		return generated_sentence
 
     # Weight of word decreases by 1/2 with distance from next word to gerneate
-    pmf_weights_unnormalized = [2**i for i in range(m)]
+    pmf_weights_unnormalized = [1 for i in range(m)]
     pmf_weights = [float(i)/sum(pmf_weights_unnormalized) for i in pmf_weights_unnormalized]
 
     # Generate one word at a time, stopping if sentence has maximum total tokens
@@ -31,13 +32,13 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
         # print("starter sentence:", pattern)
 
         # Stop when the first ., ?, or ! is found
-        if pattern[-1] in ['.', '?', '!']:
+        if pattern[-1] in ['.', '?', '!']: 
             break
 
         # Initialize frequency of all words in vocabulary
         frequency = {}
-        for key in pattern:
-        	frequency[key] = {word:0 for word in vocabulary}
+        #for key in pattern:
+        	#frequency[key] = {word:0 for word in vocabulary}
 
         # Iterate over every word in corpus
         for i in range(len(corpus)-m): 
@@ -47,24 +48,30 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
         		# Count words that appear a distance of d from key
         		d = m - k
         		if key not in frequency: 
-        			frequency[key] = {}
-        		if corpus[i] == key: 
-        			next_word = corpus[i + d]
-        			frequency[key][next_word] += 1
+                    frequency[key] = {}
+                    if corpus[i] == key: 
+                        next_word = corpus[i + d]
+                    if word not in frequency[key]: 
+                        frequency[key][word] = 0
+        		    frequency[key][next_word] += 1
 
         # Combine probability mass functions for each key's categorical distribution
         pmf = {}
-        for key in frequency.keys():
+        for key in frequency.keys(): 
         	pmf[key] = {}
         	total = sum(frequency[key].values())
-        	for word in frequency[key]:
+        	for word in frequency[key]: 
         		pmf[key][word] = float(frequency[key][word]) / total
 
-        combined_pmf = {word:0 for word in vocabulary}
+        #combined_pmf = {word:0 for word in vocabulary}
+        combined_pmf = {}
         for (ix, key) in enumerate(pattern):
-        	weight = pmf_weights[ix]
-        	for word in pmf[key]:
-        		combined_pmf[word] += pmf[key][word] * weight
+            weight = pmf_weights[ix]
+            for word in pmf[key]:
+                if word not in combined_pmf:
+                    combined_pmf[word] = 0
+                combined_pmf[word] += pmf[key][word] * weight
+        print(combined_pmf)       
 
         # Get best word option based on combined and weighted probabilities
         best_words = []
@@ -84,17 +91,36 @@ def finish_sentence(sentence, m, corpus_list, max_length=15):
 
     return generated_sentence
 
+import json
+with open("data.json") as file:
+    data = json.load(file)
+
+body = []
+titles=[]
+sports = []
+
+for item in data["2019"]:
+    body = body + item["content"].split()
+    titles = titles+ item["title"].split()
+    titles.append(".")
+sentence = "Duke students are ".split()
+print(len(body))
+#print(body[0:100])
+result = finish_sentence(sentence,3,body,max_length=30)
+
+
+
 
 import nltk
-# nltk.download("brown")
+# # nltk.download("brown")
 from nltk.corpus import brown
 words = brown.words()[:1000]
-sentence = "the jury had".split()
-result = finish_sentence(sentence, 3, words)
+#sentence = "the jury had".split()
+#result = finish_sentence(sentence, 3, words)
 print(' '.join(sentence))
 print(' '.join(result))
 
-sentence2 = "this judge was the".split()
-result2 = finish_sentence(sentence2, 3, words)
-print(' '.join(sentence2))
-print(' '.join(result2))
+# sentence2 = "this judge was the".split()
+# result2 = finish_sentence(sentence2, 3, words)
+# print(' '.join(sentence2))
+# print(' '.join(result2))

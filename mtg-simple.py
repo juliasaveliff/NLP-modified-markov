@@ -42,10 +42,28 @@ def finish_sentence(sentence, n, corpus, max_length=15):
 
 	return sentence[:-(n-1)] + output
 
-import nltk
-# nltk.download("brown")
-from nltk.corpus import brown
-words = brown.words()[:500]
-sentence = "the jury had".split()
-result = finish_sentence(sentence, 3, words)
+import json
+with open("data.json") as file:
+    data = json.load(file)
+
+body = []
+titles=[]
+sports = []
+
+for item in data["2019"]:
+    body = body + item["content"].split()
+    titles = titles+ item["title"].split()
+    titles.append(".")
+sentence = "Duke students are ".split()
+print(len(body))
+#print(body[0:100])
+result = finish_sentence(sentence,3,body)
+
+
+# import nltk
+# # nltk.download("brown")
+# from nltk.corpus import brown
+# words = brown.words()[:500]
+# sentence = "the jury had".split()
+# result = finish_sentence(sentence, 3, words)
 print(' '.join(result))
