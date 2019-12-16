@@ -1,4 +1,4 @@
-def finish_sentence(sentence, n, corpus, max_length=15):
+def finish_sentence_simple(sentence, n, corpus, max_length=15):
 	# sentence: String[]
 	# n: int 
 	# corpus: String[]
@@ -41,11 +41,3 @@ def finish_sentence(sentence, n, corpus, max_length=15):
 			return sentence[:-(n-1)]+ output
 
 	return sentence[:-(n-1)] + output
-
-import nltk
-# nltk.download("brown")
-from nltk.corpus import brown
-words = brown.words()[:500]
-sentence = "the jury had".split()
-result = finish_sentence(sentence, 3, words)
-print(' '.join(result))
