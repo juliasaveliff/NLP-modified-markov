@@ -2,12 +2,13 @@ import random
 import numpy as np
 
 def beautify_text(word_list):
+	# Edit a list of words and punctuation into a correct format
 	text = ''
 	for (ix, word) in enumerate(word_list): 
 		if ix == 0: 
 			text += word.capitalize()
 		else: 
-			if word in ['.', '?', '!', ',', ';']:
+			if word in ['.', '?', '!', ',', ';', ':']:
 				text += word
 			else: 
 				text += ' '
@@ -19,6 +20,7 @@ def beautify_text(word_list):
 
 
 def get_start_phrase(corpus, n=1):
+	# Given a corpus, return a phrase commonly found at the start of sentences of length n
 	freq = {}
 
 	for i in range(len(corpus)-n):
@@ -40,10 +42,12 @@ def get_start_phrase(corpus, n=1):
 	return random.choice(result).split()
 
 
-def finish_sentence_simple(sentence, n, corpus, max_length=50, end_at_sentence_end=False):
+def finish_sentence_simple_ngram_MTG(sentence, n, corpus, max_length=50, end_at_sentence_end=False):
 	# sentence: String[]
-	# n: int 
+	# n: int for n-gram 
 	# corpus: String[]
+	# max_length: maximum length of text to return 
+	# end at sentence end: stop when a sentence ending token is added 
 
 	corpus = [word.lower() for word in corpus]
 
@@ -87,8 +91,13 @@ def finish_sentence_simple(sentence, n, corpus, max_length=50, end_at_sentence_e
 
 def finish_sentence(sentence, max_distance, corpus_list, max_length=50, starter_length=5, deterministic=True, use_corpus_frequency=False, end_at_sentence_end=False):
 	# sentence: String[] of starter sentence to complete
-	# m: maximum distance to compute modified bigram
-	# corpus: String[] of training text
+	# max_distance: maximum distance to compute modified bigram
+	# corpus_list: String[] of training text
+	# max_length: maximum length of text to be generated
+	# starter_length: length of starter phrase to generate if no starter setnence is given 
+	# deterministic: Bool indicating whether the appended words should be chosen deterministically or not
+	# use_corpus_frequency: Bool indicating whether or not bigram frequencies should be scaled by inverse corpus frequency
+	# end at sentence end: stop when a sentence ending token is added 
 
 	if len(sentence) == 0:
 		generated_sentence = [word.lower() for word in get_start_phrase(corpus_list, starter_length)]
@@ -158,7 +167,7 @@ def finish_sentence(sentence, max_distance, corpus_list, max_length=50, starter_
 			for word in bigram_counts: 
 				word_frequency = corpus_frequency[word]
 				if use_corpus_frequency: 
-					pmf[key][word] = (np.log(float(bigram_counts[word])) * np.log(float(corpus_size) / word_frequency)) # / key_frequency
+					pmf[key][word] = (np.log(float(bigram_counts[word])) * np.log(float(corpus_size) / word_frequency)) / key_frequency
 				else:
 					pmf[key][word] = float(bigram_counts[word]) / key_frequency
 
@@ -196,38 +205,17 @@ def finish_sentence(sentence, max_distance, corpus_list, max_length=50, starter_
 	return beautify_text(generated_sentence)
 
 
+
+# Running the corpus
 import nltk
-# nltk.download("brown")
+nltk.download("brown")
 from nltk.corpus import brown
-# words = brown.words()[:10000]
-# print(len(words))
+words = brown.words()[:10000]
 
-
-# import json
-
-# with open("data.json") as file:
-#	 data = json.load(file)
-# # data = json.load(uploaded['data_2019.json'])
-# body = []
-# titles=[]
-# categories = {}
-
-# for item in data["2019"]:
-#	 if item["category"] not in categories:
-#		 categories[item["category"]] = []
-#	 categories[item["category"]].append(item)
-
-#	 # body = body + item["content"].split()
-#	 # titles = titles+ item["title"].split()
-#	 # titles.append(".")
-
-# import re
-# data_opinion = []
-# for item in categories["Opinion"]:
-#	 data_processed = re.findall(r"[\w'’]+|[.,!?;]", item["content"])
-#	 data_opinion = data_opinion + data_processed
-
-# words = data_opinion
+f = open("opinion_corpus.txt", "r")
+words = [line.rstrip('\n') for line in f]
+f.close()
+words = words[:100000]
 
 # sentence = "The jury had"
 # print(sentence)
@@ -241,15 +229,16 @@ from nltk.corpus import brown
 # sentence = "at the same time".split()
 # sentence = ['in', 'fact', ',']
 # sentence = "The jury had"
-sentence = ['in', 'fact', ',']
+
+sentence = "at the same time ,".split()
 print(beautify_text(sentence))
-print("Simple:", finish_sentence_simple(sentence, 3, words))
+print("Simple:", finish_sentence_simple_ngram_MTG(sentence, 6, words))
 print()
-print("Result:", finish_sentence(sentence, 3, words))
+print("Result:", finish_sentence(sentence, 5, words))
 print()
-print("Result with non-deterministic:", finish_sentence(sentence, 3, words, deterministic=False))
+print("Result with non-deterministic:", finish_sentence(sentence, 5, words, deterministic=False))
 print()
-print("Result with document frequency:", finish_sentence(sentence, 3, words, use_corpus_frequency=True))
+print("Result with document frequency:", finish_sentence(sentence, 5, words, use_corpus_frequency=True))
 print()
-print("Result with non-deterministic AND document frequency:", finish_sentence(sentence, 3, words, deterministic=False, use_corpus_frequency=True))
+print("Result with non-deterministic AND document frequency:", finish_sentence(sentence, 5, words, deterministic=False, use_corpus_frequency=True))
 print()

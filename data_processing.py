@@ -24,4 +24,8 @@ for item in categories["Opinion"]:
     data_processed = re.findall(r"[\w'’]+|[.,!?;]", item["content"])
     data_opinion = data_opinion + data_processed
 
-print(data_opinion)
+
+# f = open("opinion_corpus.txt", "a")
+# for word in data_opinion: 
+# 	f.write(word+"\n")
+# f.close()
